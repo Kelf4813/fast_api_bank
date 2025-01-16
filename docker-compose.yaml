@@ -1,0 +1,64 @@
+version: '3.4'
+
+services:
+  postgres_transaction:
+    restart: always
+    image: postgres:15.3-alpine
+    container_name: database_transaction
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: transaction
+    ports:
+      - "6432:5432"
+    volumes:
+      - postgres-data-transaction:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  postgres_auth:
+    restart: always
+    image: postgres:15.3-alpine
+    container_name: database_auth
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: auth
+    ports:
+      - "6433:5432"
+    volumes:
+      - postgres-data-auth:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  auth_service:
+    build:
+      context: ./auth_service
+    container_name: auth_service
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    depends_on:
+      - postgres_auth
+
+  transaction_service:
+    build:
+      context: ./transaction_service
+    container_name: transaction_service
+    ports:
+      - "8001:8001"
+    networks:
+      - app-network
+    depends_on:
+      - postgres_transaction
+
+volumes:
+  postgres-data-transaction:
+  postgres-data-auth:
+
+networks:
+  app-network:
+    driver: bridge
